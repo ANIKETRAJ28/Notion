@@ -175,6 +175,9 @@ importers:
 
   apps/server:
     dependencies:
+      dotenv:
+        specifier: ^18.0.9
+        version: 18.0.9
       express:
         specifier: ^5.3.0
         version: 5.3.0
@@ -188,9 +191,12 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
       node-pg-migrate:
         specifier: ^9.0.0
-        version: 9.0.0(pg@8.23.1)
+        version: 9.0.0(@types/pg@8.23.1)(pg@8.23.1)
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -974,6 +980,9 @@ packages:
   '@types/node@26.6.5':
     resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
 
+  '@types/pg@8.23.1':
+    resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
+
   '@types/qs@6.15.1':
     resolution: {integrity: sha512-GZHUBZR9hckSUhrxmp1nG6NwdpM9fCunJwyThLW1X3AyHgd9IlHb6VANpQQqDr2o/qQp6McZ3y/IA2rVzKzSbw==}
 
@@ -1450,6 +1459,11 @@ packages:
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
+
+  dotenv@18.0.9:
+    resolution: {integrity: sha512-3fVOW4cB02R066PUSwn8O4TJyz9NckQl7F81blIbaq9jKBm2tSmOKky7ZHIXzGvkVPXCSn6jkpziBPZdGFs8Tw==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -3505,6 +3519,12 @@ snapshots:
     dependencies:
       undici-types: 8.9.0
 
+  '@types/pg@8.23.1':
+    dependencies:
+      '@types/node': 26.6.5
+      pg-protocol: 1.16.1
+      pg-types: 2.2.0
+
   '@types/qs@6.15.1': {}
 
   '@types/range-parser@1.2.7': {}
@@ -3897,6 +3917,8 @@ snapshots:
       is-obj: 2.0.0
 
   dotenv@17.4.2: {}
+
+  dotenv@18.0.9: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -4574,12 +4596,14 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  node-pg-migrate@9.0.0(pg@8.23.1):
+  node-pg-migrate@9.0.0(@types/pg@8.23.1)(pg@8.23.1):
     dependencies:
       glob: 13.0.6
       jiti: 2.7.0
       pg: 8.23.1
       yargs: 18.0.0
+    optionalDependencies:
+      '@types/pg': 8.23.1
 
   node-releases@2.0.60: {}
 
