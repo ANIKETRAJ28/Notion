@@ -1,5 +1,6 @@
-import { pool } from "../config/database.config.js";
-import type { QueryResult, QueryResultRow } from "pg";
+import type { QueryResult, QueryResultRow } from 'pg';
+
+import { pool } from '../config/database.config.js';
 
 export const query = async <T extends QueryResultRow = QueryResultRow>(
   text: string,

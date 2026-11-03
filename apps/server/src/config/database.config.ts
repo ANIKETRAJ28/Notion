@@ -1,5 +1,6 @@
-import pg from "pg";
-import { DATABASE_URL } from "./env.config.js";
+import pg from 'pg';
+
+import { DATABASE_URL } from './env.config.js';
 
 const { Pool } = pg;
 
