@@ -22,18 +22,26 @@ export const issueRefreshToken = (userId: string, sessionId: string): string => 
 };
 
 export const verifyAccessToken = (token: string): { userId: string } => {
-  const decode = jwt.verify(token, ACCESS_TOKEN_SECRET);
+  try {
+    const decode = jwt.verify(token, ACCESS_TOKEN_SECRET);
 
-  if (typeof decode === 'string' || decode.type !== 'access' || !decode.sub) {
-    throw new AppError('Invalid access token', 401);
+    if (typeof decode === 'string' || decode.type !== 'access' || !decode.sub) {
+      throw new AppError('Invalid access token', 401);
+    }
+    return { userId: decode.sub };
+  } catch {
+    throw new AppError('Invalid or expired access token', 401);
   }
-  return { userId: decode.sub };
 };
 
 export const verifyRefreshToken = (token: string): { userId: string; sessionId: string } => {
-  const decode = jwt.verify(token, REFRESH_TOKEN_SECRET);
-  if (typeof decode === 'string' || decode.type !== 'refresh' || !decode.sub || !decode.jti) {
-    throw new AppError('Invalid refresh token', 401);
+  try {
+    const decode = jwt.verify(token, REFRESH_TOKEN_SECRET);
+    if (typeof decode === 'string' || decode.type !== 'refresh' || !decode.sub || !decode.jti) {
+      throw new AppError('Invalid refresh token', 401);
+    }
+    return { userId: decode.sub, sessionId: decode.jti };
+  } catch {
+    throw new AppError('Invalid or expired refresh token', 401);
   }
-  return { userId: decode.sub, sessionId: decode.jti };
 };
