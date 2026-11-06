@@ -1,6 +1,4 @@
 {
-  "files": [],
-  "references": [],
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
