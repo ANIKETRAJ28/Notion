@@ -8,7 +8,7 @@ import { AuthRepository } from '../repository/auth.repository.js';
 import { SessionRepository } from '../repository/session.repository.js';
 import { WorkspaceRepository } from '../repository/workspace.repository.js';
 import type { IRegisterUser, IUser, IUserLogin, IUserWithPassword } from '../schema/auth.schema.js';
-import { ICreateSession } from '../schema/session.schema.js';
+import { ICreateSession, ISession } from '../schema/session.schema.js';
 import { IWorkspace } from '../schema/workspace.schema.js';
 import { AppError } from '../utils/app-error.util.js';
 import { issueAccessToken, issueRefreshToken, verifyRefreshToken } from '../utils/token.util.js';
@@ -153,7 +153,7 @@ export class AuthService {
       await client.query('BEGIN');
       transactionStarted = true;
       // Find active session with the id
-      const session = await this.sessionRepository.findActiveSessionById(client, sessionId);
+      const session: ISession | null = await this.sessionRepository.findActiveSessionById(client, sessionId);
       if (!session || session.user_id !== userId) {
         throw new AppError('Invalid or expired refresh token', 401);
       }
