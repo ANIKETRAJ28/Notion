@@ -130,7 +130,7 @@ export class AuthService {
     const { userId, sessionId } = verifyRefreshToken(refreshToken);
     const client = await this.clientPool.connect();
     try {
-      const session = await this.sessionRepository.findActiveSessionById(client, sessionId);
+      const session: ISession | null = await this.sessionRepository.findActiveSessionById(client, sessionId);
       if (!session || session.user_id !== userId) {
         throw new AppError('Invalid or expired refresh token', 401);
       }

@@ -400,7 +400,7 @@ describe('AuthService - registerUser', () => {
   });
 });
 
-describe('AuthService - refereshAccessToken', async () => {
+describe('AuthService - refereshAccessToken', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
@@ -628,6 +628,158 @@ describe('AuthService - refereshAccessToken', async () => {
 
     expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
     expect(queryMock).toHaveBeenNthCalledWith(2, 'ROLLBACK');
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+});
+
+describe('AuthService - login', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    connectMock.mockResolvedValue(client);
+    queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
+    authService = new AuthService(authRepository, workspaceRepository, sessionRepository, clientPool);
+  });
+
+  it('should successfully logout a user', async () => {
+    const tokenHash = await bcrypt.hash(existingRefreshToken, 4);
+    const session: ISession = {
+      ...existingSession,
+      token_hash: tokenHash,
+    };
+
+    findActiveSessionByIdMock.mockResolvedValue(session);
+    revokeSessionMock.mockResolvedValue(true);
+
+    await authService.logout(existingRefreshToken);
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalled();
+    expect(findActiveSessionByIdMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(revokeSessionMock).toHaveBeenCalledOnce();
+    expect(revokeSessionMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should reject logout when the session is missing or expired', async () => {
+    findActiveSessionByIdMock.mockResolvedValue(null);
+
+    await expect(authService.logout(existingRefreshToken)).rejects.toThrow('Invalid or expired refresh token');
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+    expect(findActiveSessionByIdMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(revokeSessionMock).not.toHaveBeenCalled();
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should reject logout when session belongs to another user', async () => {
+    const tokenHash = await bcrypt.hash(existingRefreshToken, 4);
+    const session = {
+      ...existingSession,
+      user_id: 'another-user-id',
+      token_hash: tokenHash,
+    };
+
+    findActiveSessionByIdMock.mockResolvedValue(session);
+
+    await expect(authService.logout(existingRefreshToken)).rejects.toThrow('Invalid or expired refresh token');
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+    expect(revokeSessionMock).not.toHaveBeenCalledOnce();
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should reject logout when refresh token hash does not match', async () => {
+    const wrongTokenHash = await bcrypt.hash('some-other-token', 4);
+
+    const session = {
+      ...existingSession,
+      token_hash: wrongTokenHash,
+    };
+
+    findActiveSessionByIdMock.mockResolvedValue(session);
+
+    await expect(authService.logout(existingRefreshToken)).rejects.toThrow('Invalid refresh token');
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+    expect(findActiveSessionByIdMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(revokeSessionMock).not.toHaveBeenCalled();
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should release connection when session revocation fails', async () => {
+    const tokenHash = await bcrypt.hash(existingRefreshToken, 4);
+
+    const session = {
+      ...existingSession,
+      token_hash: tokenHash,
+    };
+
+    findActiveSessionByIdMock.mockResolvedValue(session);
+
+    revokeSessionMock.mockRejectedValue(new Error('Failed to revoke session'));
+
+    await expect(authService.logout(existingRefreshToken)).rejects.toThrow('Failed to revoke session');
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+
+    expect(revokeSessionMock).toHaveBeenCalledOnce();
+    expect(revokeSessionMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should complete logout when session revocation returns false', async () => {
+    const tokenHash = await bcrypt.hash(existingRefreshToken, 4);
+
+    const session = {
+      ...existingSession,
+      token_hash: tokenHash,
+    };
+
+    findActiveSessionByIdMock.mockResolvedValue(session);
+    revokeSessionMock.mockResolvedValue(false);
+
+    await expect(authService.logout(existingRefreshToken)).resolves.toBeUndefined();
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+
+    expect(revokeSessionMock).toHaveBeenCalledOnce();
+    expect(revokeSessionMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should reject logout when refresh token is invalid', async () => {
+    const invalidRefreshToken = 'invalid-token';
+
+    await expect(authService.logout(invalidRefreshToken)).rejects.toThrow();
+
+    expect(connectMock).not.toHaveBeenCalled();
+
+    expect(findActiveSessionByIdMock).not.toHaveBeenCalled();
+    expect(revokeSessionMock).not.toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
+
+    expect(client.release).not.toHaveBeenCalled();
+  });
+
+  it('should release connection when finding the session fails', async () => {
+    findActiveSessionByIdMock.mockRejectedValue(new Error('Database query failed'));
+
+    await expect(authService.logout(existingRefreshToken)).rejects.toThrow('Database query failed');
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledOnce();
+
+    expect(findActiveSessionByIdMock).toHaveBeenCalledWith(client, existingSession.id);
+
+    expect(revokeSessionMock).not.toHaveBeenCalled();
 
     expect(client.release).toHaveBeenCalledOnce();
   });
