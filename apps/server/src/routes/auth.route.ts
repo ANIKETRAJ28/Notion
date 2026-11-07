@@ -3,14 +3,14 @@ import { Router } from 'express';
 import { pool } from '../config/database.config.js';
 import { AuthController } from '../controller/auth.controller.js';
 import { authenticationMiddleware } from '../middleware/auth.middleware.js';
-import { AuthRepository } from '../repository/user.repository.js';
 import { SessionRepository } from '../repository/session.repository.js';
+import { UserRepository } from '../repository/user.repository.js';
 import { WorkspaceRepository } from '../repository/workspace.repository.js';
 import { AuthService } from '../service/auth.service.js';
 
 const router = Router();
 
-const authRepository = new AuthRepository();
+const authRepository = new UserRepository();
 const workspaceRepository = new WorkspaceRepository();
 const sessionRepository = new SessionRepository();
 const authService = new AuthService(authRepository, workspaceRepository, sessionRepository, pool);

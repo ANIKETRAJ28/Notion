@@ -7,11 +7,33 @@
   "engines": {
     "node": ">=22 <25"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml,css,scss,html}": [
+      "prettier --write"
+    ]
+  },
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
     "lint": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "test": "pnpm -r --if-present test",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "typecheck:web": "pnpm --filter web typecheck",
+    "lint:web": "pnpm --filter web lint",
+    "dev:server": "pnpm --filter server dev",
+    "build:server": "pnpm --filter server build",
+    "typecheck:server": "pnpm --filter server typecheck",
+    "lint:server": "pnpm --filter server lint",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +44,8 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "eslint": "^10.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "typescript": "6.0"
   }
