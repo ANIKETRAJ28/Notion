@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { pool } from '../config/database.config.js';
 import { AuthController } from '../controller/auth.controller.js';
 import { authenticationMiddleware } from '../middleware/auth.middleware.js';
-import { AuthRepository } from '../repository/auth.repository.js';
+import { AuthRepository } from '../repository/user.repository.js';
 import { SessionRepository } from '../repository/session.repository.js';
 import { WorkspaceRepository } from '../repository/workspace.repository.js';
 import { AuthService } from '../service/auth.service.js';

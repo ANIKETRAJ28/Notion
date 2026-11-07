@@ -2,7 +2,7 @@ import type { PoolClient } from 'pg';
 
 import { IRegisterUser, IUser, IUserWithPassword } from '../schema/auth.schema.js';
 
-export class AuthRepository {
+export class UserRepository {
   async createUser(client: PoolClient, data: IRegisterUser): Promise<IUser> {
     const query = `
         INSERT INTO users (name, email, password_hash)

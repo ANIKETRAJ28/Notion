@@ -4,8 +4,8 @@ import bcrypt from 'bcrypt';
 import { Pool } from 'pg';
 
 import { REFRESH_TOKEN_TTL_MS, SALT_ROUND } from '../config/env.config.js';
-import { AuthRepository } from '../repository/auth.repository.js';
 import { SessionRepository } from '../repository/session.repository.js';
+import { UserRepository } from '../repository/user.repository.js';
 import { WorkspaceRepository } from '../repository/workspace.repository.js';
 import type { IRegisterUser, IUser, IUserLogin, IUserWithPassword } from '../schema/auth.schema.js';
 import { ICreateSession, ISession } from '../schema/session.schema.js';
@@ -15,7 +15,7 @@ import { issueAccessToken, issueRefreshToken, verifyRefreshToken } from '../util
 
 export class AuthService {
   constructor(
-    private readonly authRepository: AuthRepository,
+    private readonly userRepository: UserRepository,
     private readonly workspaceRepository: WorkspaceRepository,
     private readonly sessionRepository: SessionRepository,
     private readonly clientPool: Pool,
@@ -35,7 +35,7 @@ export class AuthService {
       await client.query('BEGIN');
       transactionStarted = true;
       // Create user
-      const user = await this.authRepository.createUser(client, {
+      const user = await this.userRepository.createUser(client, {
         ...data,
         password: hashPassword,
       });
@@ -87,7 +87,7 @@ export class AuthService {
   async loginUser(data: IUserLogin): Promise<{ user: IUser; accessToken: string; refreshToken: string }> {
     const client = await this.clientPool.connect();
     try {
-      const user: IUserWithPassword | null = await this.authRepository.findUserByEmail(client, data.email);
+      const user: IUserWithPassword | null = await this.userRepository.findUserByEmail(client, data.email);
       if (!user) {
         throw new AppError('Email or password incorrect', 401);
       }
