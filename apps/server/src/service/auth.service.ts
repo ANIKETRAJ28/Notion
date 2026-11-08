@@ -7,6 +7,7 @@ import { REFRESH_TOKEN_TTL_MS, SALT_ROUND } from '../config/env.config.js';
 import { SessionRepository } from '../repository/session.repository.js';
 import { UserRepository } from '../repository/user.repository.js';
 import { WorkspaceRepository } from '../repository/workspace.repository.js';
+import { WorkSpaceMemberRepository } from '../repository/workspace-member.repository.js';
 import type { IRegisterUser, IUser, IUserLogin, IUserWithPassword } from '../schema/auth.schema.js';
 import { ICreateSession, ISession } from '../schema/session.schema.js';
 import { IWorkspace } from '../schema/workspace.schema.js';
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly workspaceRepository: WorkspaceRepository,
+    private readonly workspaceMemberRepository: WorkSpaceMemberRepository,
     private readonly sessionRepository: SessionRepository,
     private readonly clientPool: Pool,
   ) {}
@@ -44,6 +46,13 @@ export class AuthService {
         name: 'Personal Workspace',
         is_personal: true,
         created_by: user.id,
+      });
+
+      // Create workspace-member mapping
+      await this.workspaceMemberRepository.createWorkspaceMember(client, {
+        user_id: user.id,
+        workspace_id: workspace.id,
+        role: 'owner',
       });
 
       const sessionId = randomUUID();

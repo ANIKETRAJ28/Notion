@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { IMemberRole } from './workspace-member.schema.js';
+
 export const createWorkspaceSchema = z.object({
   name: z.string().trim().min(1).max(100),
   is_personal: z.boolean(),
@@ -16,3 +18,8 @@ export interface IWorkspace {
   created_at: Date;
   updated_at: Date;
 }
+
+export type IWorkspaceWithMember = IWorkspace & {
+  role: IMemberRole;
+  joined_at: Date;
+};
