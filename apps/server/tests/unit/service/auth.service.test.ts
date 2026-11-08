@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionRepository } from '../../../src/repository/session.repository';
 import { UserRepository } from '../../../src/repository/user.repository';
 import { WorkspaceRepository } from '../../../src/repository/workspace.repository';
+import { WorkSpaceMemberRepository } from '../../../src/repository/workspace-member.repository';
 import { IUser, IUserWithPassword } from '../../../src/schema/auth.schema';
 import { ISession } from '../../../src/schema/session.schema';
 import { IWorkspace } from '../../../src/schema/workspace.schema';
@@ -16,6 +17,7 @@ const findUserByEmailMock = vi.fn();
 const createSessionMock = vi.fn();
 const createUserMock = vi.fn();
 const createPersonalWorkspaceMock = vi.fn();
+const createWorkspaceMemberMock = vi.fn();
 const revokeSessionMock = vi.fn();
 const findActiveSessionByIdMock = vi.fn();
 const queryMock = vi.fn();
@@ -36,7 +38,12 @@ const userRepository = {
 
 const workspaceRepository = {
   createPersonalWorkspace: createPersonalWorkspaceMock,
+  getUserWorkspaces: vi.fn(),
 } as WorkspaceRepository;
+
+const workspaceMemberRepository = {
+  createWorkspaceMember: createWorkspaceMemberMock,
+} as WorkSpaceMemberRepository;
 
 const sessionRepository = {
   createSession: createSessionMock,
@@ -87,7 +94,13 @@ describe('AuthService - loginUser', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
-    authService = new AuthService(userRepository, workspaceRepository, sessionRepository, clientPool);
+    authService = new AuthService(
+      userRepository,
+      workspaceRepository,
+      workspaceMemberRepository,
+      sessionRepository,
+      clientPool,
+    );
   });
 
   it('should successfully login a user', async () => {
@@ -266,7 +279,13 @@ describe('AuthService - registerUser', () => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
-    authService = new AuthService(userRepository, workspaceRepository, sessionRepository, clientPool);
+    authService = new AuthService(
+      userRepository,
+      workspaceRepository,
+      workspaceMemberRepository,
+      sessionRepository,
+      clientPool,
+    );
   });
 
   it('should successfully register user', async () => {
@@ -405,7 +424,13 @@ describe('AuthService - refereshAccessToken', () => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
-    authService = new AuthService(userRepository, workspaceRepository, sessionRepository, clientPool);
+    authService = new AuthService(
+      userRepository,
+      workspaceRepository,
+      workspaceMemberRepository,
+      sessionRepository,
+      clientPool,
+    );
   });
 
   it('should successfully refresh access and refresh tokens', async () => {
@@ -638,7 +663,13 @@ describe('AuthService - login', () => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
-    authService = new AuthService(userRepository, workspaceRepository, sessionRepository, clientPool);
+    authService = new AuthService(
+      userRepository,
+      workspaceRepository,
+      workspaceMemberRepository,
+      sessionRepository,
+      clientPool,
+    );
   });
 
   it('should successfully logout a user', async () => {
