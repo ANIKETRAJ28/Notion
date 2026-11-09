@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SessionRepository } from '../../../src/repository/session.repository';
 import { UserRepository } from '../../../src/repository/user.repository';
 import { WorkspaceRepository } from '../../../src/repository/workspace.repository';
-import { WorkSpaceMemberRepository } from '../../../src/repository/workspace-member.repository';
+import { WorkspaceMemberRepository } from '../../../src/repository/workspace-member.repository';
 import { IUser, IUserWithPassword } from '../../../src/schema/auth.schema';
 import { ISession } from '../../../src/schema/session.schema';
 import { IWorkspace } from '../../../src/schema/workspace.schema';
@@ -44,7 +44,7 @@ const workspaceRepository = {
 
 const workspaceMemberRepository = {
   createWorkspaceMember: createWorkspaceMemberMock,
-} as WorkSpaceMemberRepository;
+} as WorkspaceMemberRepository;
 
 const sessionRepository = {
   createSession: createSessionMock,
