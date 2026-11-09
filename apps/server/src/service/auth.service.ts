@@ -42,7 +42,7 @@ export class AuthService {
         password: hashPassword,
       });
       // Create personal workspace
-      const workspace = await this.workspaceRepository.createPersonalWorkspace(client, {
+      const workspace = await this.workspaceRepository.createWorkspace(client, {
         name: 'Personal Workspace',
         is_personal: true,
         created_by: user.id,

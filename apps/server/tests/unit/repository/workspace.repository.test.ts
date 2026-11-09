@@ -38,7 +38,7 @@ describe('WorkspaceRepository - createPersonalWorkspace', () => {
       rowCount: 1,
     });
 
-    const result = await workspaceRepository.createPersonalWorkspace(client, personalWorkspace);
+    const result = await workspaceRepository.createWorkspace(client, personalWorkspace);
 
     expect(queryMock).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO workspaces'), [
       personalWorkspace.name,
@@ -52,7 +52,7 @@ describe('WorkspaceRepository - createPersonalWorkspace', () => {
   it('should throw an error when database query fails', async () => {
     queryMock.mockRejectedValue(new Error('Database query failed'));
 
-    await expect(workspaceRepository.createPersonalWorkspace(client, personalWorkspace)).rejects.toThrow(
+    await expect(workspaceRepository.createWorkspace(client, personalWorkspace)).rejects.toThrow(
       'Database query failed',
     );
 

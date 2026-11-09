@@ -9,6 +9,7 @@ import { WorkSpaceMemberRepository } from '../../../src/repository/workspace-mem
 import { IUser, IUserWithPassword } from '../../../src/schema/auth.schema';
 import { ISession } from '../../../src/schema/session.schema';
 import { IWorkspace } from '../../../src/schema/workspace.schema';
+import { ICreateWorkspaceMember } from '../../../src/schema/workspace-member.schema';
 import { AuthService } from '../../../src/service/auth.service';
 import { issueRefreshToken } from '../../../src/utils/token.util';
 
@@ -16,7 +17,7 @@ const connectMock = vi.fn();
 const findUserByEmailMock = vi.fn();
 const createSessionMock = vi.fn();
 const createUserMock = vi.fn();
-const createPersonalWorkspaceMock = vi.fn();
+const createWorkspaceMock = vi.fn();
 const createWorkspaceMemberMock = vi.fn();
 const revokeSessionMock = vi.fn();
 const findActiveSessionByIdMock = vi.fn();
@@ -37,7 +38,7 @@ const userRepository = {
 } as unknown as UserRepository;
 
 const workspaceRepository = {
-  createPersonalWorkspace: createPersonalWorkspaceMock,
+  createWorkspace: createWorkspaceMock,
   getUserWorkspaces: vi.fn(),
 } as WorkspaceRepository;
 
@@ -77,6 +78,12 @@ const workspace: IWorkspace = {
   created_by: 'user-123',
   created_at: new Date(),
   updated_at: new Date(),
+};
+
+const workspaceMember: ICreateWorkspaceMember = {
+  user_id: 'user-123',
+  workspace_id: 'workspace-123',
+  role: 'owner',
 };
 
 const existingRefreshToken = issueRefreshToken(registeredUser.id, 'session-123');
@@ -290,7 +297,8 @@ describe('AuthService - registerUser', () => {
 
   it('should successfully register user', async () => {
     createUserMock.mockResolvedValue(registeredUser);
-    createPersonalWorkspaceMock.mockResolvedValue(workspace);
+    createWorkspaceMock.mockResolvedValue(workspace);
+    createWorkspaceMemberMock.mockResolvedValue(workspaceMember);
     createSessionMock.mockResolvedValue(undefined);
 
     const result = await authService.registerUser({
@@ -311,7 +319,8 @@ describe('AuthService - registerUser', () => {
     expect(result.refreshToken).toBeTruthy();
 
     expect(createUserMock).toHaveBeenCalledOnce();
-    expect(createPersonalWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMemberMock).toHaveBeenCalledExactlyOnceWith(client, workspaceMember);
     expect(createSessionMock).toHaveBeenCalledOnce();
 
     expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
@@ -336,16 +345,63 @@ describe('AuthService - registerUser', () => {
     ).rejects.toThrow('Email already registered');
 
     expect(createUserMock).toHaveBeenCalledOnce();
-    expect(createPersonalWorkspaceMock).not.toHaveBeenCalled();
+    expect(createWorkspaceMock).not.toHaveBeenCalled();
     expect(createSessionMock).not.toHaveBeenCalled();
     expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
     expect(queryMock).toHaveBeenNthCalledWith(2, 'ROLLBACK');
     expect(client.release).toHaveBeenCalledOnce();
   });
 
+  it('should rollback transaction when workspace creation fails', async () => {
+    createUserMock.mockResolvedValue(registeredUser);
+    createWorkspaceMock.mockRejectedValue(new Error('Workspace creation failed'));
+
+    await expect(
+      authService.registerUser({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+      }),
+    ).rejects.toThrow('Workspace creation failed');
+
+    expect(createUserMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMemberMock).not.toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
+
+    expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
+    expect(queryMock).toHaveBeenNthCalledWith(2, 'ROLLBACK');
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
+  it('should rollback transaction when workspace member mapping creation fails', async () => {
+    createUserMock.mockResolvedValue(registeredUser);
+    createWorkspaceMock.mockResolvedValue(workspace);
+    createWorkspaceMemberMock.mockRejectedValue(new Error('Workspace member mapping creation failed'));
+
+    await expect(
+      authService.registerUser({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+      }),
+    ).rejects.toThrow('Workspace member mapping creation failed');
+
+    expect(createUserMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMemberMock).toHaveBeenCalled();
+    expect(createSessionMock).not.toHaveBeenCalled();
+
+    expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
+    expect(queryMock).toHaveBeenNthCalledWith(2, 'ROLLBACK');
+
+    expect(client.release).toHaveBeenCalledOnce();
+  });
+
   it('should rollback transaction when session creation fails', async () => {
     createUserMock.mockResolvedValue(registeredUser);
-    createPersonalWorkspaceMock.mockResolvedValue(workspace);
+    createWorkspaceMock.mockResolvedValue(workspace);
     createSessionMock.mockRejectedValue(new Error('Session creation failed'));
 
     await expect(
@@ -357,7 +413,7 @@ describe('AuthService - registerUser', () => {
     ).rejects.toThrow('Session creation failed');
 
     expect(createUserMock).toHaveBeenCalledOnce();
-    expect(createPersonalWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMock).toHaveBeenCalledOnce();
     expect(createSessionMock).toHaveBeenCalledOnce();
 
     expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
@@ -368,7 +424,7 @@ describe('AuthService - registerUser', () => {
 
   it('should rollback transaction when commit fails', async () => {
     createUserMock.mockResolvedValue(registeredUser);
-    createPersonalWorkspaceMock.mockResolvedValue(workspace);
+    createWorkspaceMock.mockResolvedValue(workspace);
     createSessionMock.mockResolvedValue(undefined);
 
     queryMock.mockImplementation(async (command) => {
@@ -387,7 +443,7 @@ describe('AuthService - registerUser', () => {
     ).rejects.toThrow('Commit failed');
 
     expect(createUserMock).toHaveBeenCalledOnce();
-    expect(createPersonalWorkspaceMock).toHaveBeenCalledOnce();
+    expect(createWorkspaceMock).toHaveBeenCalledOnce();
     expect(createSessionMock).toHaveBeenCalledOnce();
 
     expect(queryMock).toHaveBeenNthCalledWith(1, 'BEGIN');
@@ -409,7 +465,7 @@ describe('AuthService - registerUser', () => {
     ).rejects.toThrow('Transaction start failed');
 
     expect(createUserMock).not.toHaveBeenCalled();
-    expect(createPersonalWorkspaceMock).not.toHaveBeenCalled();
+    expect(createWorkspaceMock).not.toHaveBeenCalled();
     expect(createSessionMock).not.toHaveBeenCalled();
 
     expect(queryMock).toHaveBeenCalledWith('BEGIN');
