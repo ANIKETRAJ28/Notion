@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const pagePermissionEnum = z.enum(['view', 'comment', 'edit']);
+export const pagePermissionEnum = z.enum(['view', 'comment', 'edit']);
 
 export const createPagePermissionSchema = z.object({
   page_id: z.string().trim(),

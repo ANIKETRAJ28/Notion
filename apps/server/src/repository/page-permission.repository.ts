@@ -20,30 +20,36 @@ export class PagePermissionRepository {
     return pagePermission;
   }
 
-  async getPagePermissionForUser(client: PoolClient, pageId: string, userId: string): Promise<IPagePermission | null> {
+  async getPagePermissionForUserForPage(
+    client: PoolClient,
+    pageId: string,
+    userId: string,
+  ): Promise<IPagePermission | null> {
     const query = `
       SELECT *
       FROM page_permissions
         WHERE page_id = $1
         AND user_id = $2;
     `;
-    const result = await client.query<IPagePermission>(query, [pageId, userId]);
-    const pagePermission = result.rows[0] ?? null;
+    const result = await client.query(query, [pageId, userId]);
+    const pagePermission: IPagePermission = result.rows[0] ?? null;
     return pagePermission;
   }
 
-  async getPagePermissions(client: PoolClient, pageId: string): Promise<IPagePermission[]> {
+  async getPagePermissionsForPage(client: PoolClient, pageId: string): Promise<IPagePermission[]> {
     const query = `
-    SELECT *
-    FROM page_permissions
-    WHERE page_id = $1
-    ORDER BY created_at ASC;
-  `;
-    const result = await client.query<IPagePermission>(query, [pageId]);
-    return result.rows;
+      SELECT *
+      FROM page_permissions
+        WHERE page_id = $1
+      ORDER BY created_at ASC;
+    `;
+    const values = [pageId];
+    const result = await client.query(query, values);
+    const pagePermissions: IPagePermission[] = result.rows;
+    return pagePermissions;
   }
 
-  async getWorkspacePagePermissions(
+  async getPagePermissionsForUserForWorkspace(
     client: PoolClient,
     workspaceId: string,
     userId: string,
@@ -63,7 +69,7 @@ export class PagePermissionRepository {
     return pagePermissions;
   }
 
-  async getUserPagePermissions(client: PoolClient, userId: string): Promise<IPagePermission[]> {
+  async getPagePermissionsForUser(client: PoolClient, userId: string): Promise<IPagePermission[]> {
     const query = `
       SELECT *
       FROM page_permissions
@@ -76,7 +82,7 @@ export class PagePermissionRepository {
     return pagePermissions;
   }
 
-  async updatePagePermission(
+  async updatePagePermissionForUser(
     client: PoolClient,
     pageId: string,
     userId: string,
@@ -106,7 +112,11 @@ export class PagePermissionRepository {
     return result.rowCount === 1;
   }
 
-  async deleteWorkspaceUserPagePermissions(client: PoolClient, workspaceId: string, userId: string): Promise<void> {
+  async deletePagePermissionsForUserForWorkspace(
+    client: PoolClient,
+    workspaceId: string,
+    userId: string,
+  ): Promise<void> {
     const query = `
     DELETE FROM page_permissions pp
       USING pages p

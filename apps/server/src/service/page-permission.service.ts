@@ -8,23 +8,23 @@ import { AppError } from '../utils/app-error.util.js';
 
 export class PagePermissionService {
   constructor(
-    private readonly pageRepository: PageRepository,
     private readonly pagePermissionRepository: PagePermissionRepository,
+    private readonly pageRepository: PageRepository,
     private readonly workspaceMemberRepository: WorkspaceMemberRepository,
     private readonly clientPool: Pool,
   ) {}
 
-  async getPagePermissions(requestedBy: string, pageId: string): Promise<IPagePermission[]> {
+  async getPagePermissionsForPage(userId: string, pageId: string): Promise<IPagePermission[]> {
     const client = await this.clientPool.connect();
     try {
       const page = await this.pageRepository.getPageById(client, pageId);
       if (!page) {
         throw new AppError('Page not found', 404);
       }
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
         client,
         page.workspace_id,
-        requestedBy,
+        userId,
       );
       if (!membership) {
         throw new AppError('You do not have access to this page', 403);
@@ -32,7 +32,7 @@ export class PagePermissionService {
       if (membership.role !== 'owner' && membership.role !== 'admin') {
         throw new AppError('Only workspace owners and admins can view page permissions', 403);
       }
-      return await this.pagePermissionRepository.getPagePermissions(client, pageId);
+      return await this.pagePermissionRepository.getPagePermissionsForPage(client, pageId);
     } finally {
       client.release();
     }
@@ -50,7 +50,7 @@ export class PagePermissionService {
       if (!page) {
         throw new AppError('Page not found', 404);
       }
-      const grantorMembership = await this.workspaceMemberRepository.getWorkspaceMember(
+      const grantorMembership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
         client,
         page.workspace_id,
         grantedBy,
@@ -61,7 +61,7 @@ export class PagePermissionService {
       if (grantorMembership.role !== 'owner' && grantorMembership.role !== 'admin') {
         throw new AppError('Only workspace owners and admins can share pages', 403);
       }
-      const targetMembership = await this.workspaceMemberRepository.getWorkspaceMember(
+      const targetMembership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
         client,
         page.workspace_id,
         userId,
@@ -69,7 +69,11 @@ export class PagePermissionService {
       if (!targetMembership) {
         throw new AppError('The user must be a member of this workspace', 400);
       }
-      const existingPermission = await this.pagePermissionRepository.getPagePermissionForUser(client, pageId, userId);
+      const existingPermission = await this.pagePermissionRepository.getPagePermissionForUserForPage(
+        client,
+        pageId,
+        userId,
+      );
       if (existingPermission) {
         throw new AppError('This user already has permission on this page', 409);
       }
@@ -96,18 +100,26 @@ export class PagePermissionService {
       if (!page) {
         throw new AppError('Page not found', 404);
       }
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, page.workspace_id, updatedBy);
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
+        client,
+        page.workspace_id,
+        updatedBy,
+      );
       if (!membership) {
         throw new AppError('You do not have access to this page', 403);
       }
       if (membership.role !== 'owner' && membership.role !== 'admin') {
         throw new AppError('Only workspace owners and admins can update page permissions', 403);
       }
-      const existingPermission = await this.pagePermissionRepository.getPagePermissionForUser(client, pageId, userId);
+      const existingPermission = await this.pagePermissionRepository.getPagePermissionForUserForPage(
+        client,
+        pageId,
+        userId,
+      );
       if (!existingPermission) {
         throw new AppError('Page permission not found', 404);
       }
-      const updatedPermission = await this.pagePermissionRepository.updatePagePermission(
+      const updatedPermission = await this.pagePermissionRepository.updatePagePermissionForUser(
         client,
         pageId,
         userId,
@@ -129,7 +141,11 @@ export class PagePermissionService {
       if (!page) {
         throw new AppError('Page not found', 404);
       }
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, page.workspace_id, revokedBy);
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
+        client,
+        page.workspace_id,
+        revokedBy,
+      );
       if (!membership) {
         throw new AppError('You do not have access to this page', 403);
       }

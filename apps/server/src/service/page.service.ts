@@ -18,18 +18,30 @@ export class PageService {
   async createPage(userId: string, data: ICreatePage): Promise<IPage> {
     const client = await this.clientPool.connect();
     try {
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, data.workspace_id, userId);
+      // User should be member of workspace in which the page is.
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
+        client,
+        data.workspace_id,
+        userId,
+      );
       if (!membership) {
         throw new AppError('You do not have access to this workspace', 403);
       }
-      // Validate parent page, if provided.
+      // Page creation is by default for owner and admin for workspace
+      if (membership.role === 'owner' || membership.role === 'admin') {
+        return await this.pageRepository.createPage(client, {
+          ...data,
+          created_by: userId,
+        });
+      }
+      // Validate if parent page is available or not.
       if (data.parent_page_id) {
-        const parentPage = await this.pageRepository.getPageById(client, data.parent_page_id);
+        const parentPage: IPage | null = await this.pageRepository.getPageById(client, data.parent_page_id);
         if (!parentPage || parentPage.workspace_id !== data.workspace_id) {
           throw new AppError('Parent page not found in this workspace', 404);
         }
-        // User must have edit permission on the parent page.
-        await this.checkPagePermission(client, userId, parentPage, 'edit');
+        // Check that user has the edit permission on the parent page.
+        await this.checkPagePermissionForUser(client, userId, parentPage, 'edit');
       }
       return await this.pageRepository.createPage(client, {
         ...data,
@@ -40,28 +52,32 @@ export class PageService {
     }
   }
 
-  async getPageById(userId: string, pageId: string): Promise<IPage> {
+  async getPageByIdForUser(userId: string, pageId: string): Promise<IPage> {
     const client = await this.clientPool.connect();
     try {
       const page = await this.pageRepository.getPageById(client, pageId);
       if (!page) {
         throw new AppError('Page not found', 404);
       }
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, page.workspace_id, userId);
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
+        client,
+        page.workspace_id,
+        userId,
+      );
       if (!membership) {
         throw new AppError('You do not have access to this page', 404);
       }
-      await this.checkPagePermission(client, userId, page, 'view');
+      await this.checkPagePermissionForUser(client, userId, page, 'view');
       return page;
     } finally {
       client.release();
     }
   }
 
-  async getWorkspacePages(userId: string, workspaceId: string): Promise<IPage[]> {
+  async getPagesForWorkspace(userId: string, workspaceId: string): Promise<IPage[]> {
     const client = await this.clientPool.connect();
     try {
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, workspaceId, userId);
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(client, workspaceId, userId);
       if (!membership) {
         throw new AppError('You do not have access to this workspace', 403);
       }
@@ -69,11 +85,12 @@ export class PageService {
       if (membership.role === 'owner' || membership.role === 'admin') {
         return pages;
       }
-      const userPermissions = await this.pagePermissionRepository.getWorkspacePagePermissions(
+      const userPermissions = await this.pagePermissionRepository.getPagePermissionsForUserForWorkspace(
         client,
         workspaceId,
         userId,
       );
+      // Only add the accessible pages in the workspace to return
       const accessiblePageIds = new Set(userPermissions.map((permission) => permission.page_id));
       return pages.filter((page) => page.created_by === userId || accessiblePageIds.has(page.id));
     } finally {
@@ -82,8 +99,7 @@ export class PageService {
   }
 
   async getWorkspacePageTree(userId: string, workspaceId: string): Promise<IPageTree[]> {
-    const pages = await this.getWorkspacePages(userId, workspaceId);
-
+    const pages = await this.getPagesForWorkspace(userId, workspaceId);
     return this.buildPageTree(pages);
   }
 
@@ -94,7 +110,7 @@ export class PageService {
       if (!existingPage) {
         throw new AppError('Page not found', 404);
       }
-      await this.checkPagePermission(client, userId, existingPage, 'edit');
+      await this.checkPagePermissionForUser(client, userId, existingPage, 'edit');
       if (data.parent_page_id !== undefined && data.parent_page_id !== null) {
         if (data.parent_page_id === pageId) {
           throw new AppError('A page cannot be its own parent', 400);
@@ -104,7 +120,7 @@ export class PageService {
           throw new AppError('Parent page not found in this workspace', 404);
         }
         // A user must also be allowed to edit the new parent page.
-        await this.checkPagePermission(client, userId, parentPage, 'edit');
+        await this.checkPagePermissionForUser(client, userId, parentPage, 'edit');
         // Prevent circular page hierarchy.
         const hasCycle = await this.hasCircularHierarchy(
           client,
@@ -133,7 +149,7 @@ export class PageService {
       if (!existingPage) {
         throw new AppError('Page not found', 404);
       }
-      const membership = await this.workspaceMemberRepository.getWorkspaceMember(
+      const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
         client,
         existingPage.workspace_id,
         userId,
@@ -144,7 +160,7 @@ export class PageService {
       if (membership.role !== 'owner' && membership.role !== 'admin') {
         throw new AppError('Only workspace owners and admins can delete pages', 403);
       }
-      const hasChildren = await this.pageRepository.hasChildPages(client, pageId);
+      const hasChildren = await this.pageRepository.hasChildPagesForPage(client, pageId);
       if (hasChildren) {
         throw new AppError(
           'Cannot delete a page that contains child pages. Move or delete its child pages first.',
@@ -160,13 +176,17 @@ export class PageService {
     }
   }
 
-  private async checkPagePermission(
+  private async checkPagePermissionForUser(
     client: PoolClient,
     userId: string,
     page: IPage,
     requiredPermission: IPagePermissionEnum,
   ): Promise<void> {
-    const membership = await this.workspaceMemberRepository.getWorkspaceMember(client, page.workspace_id, userId);
+    const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(
+      client,
+      page.workspace_id,
+      userId,
+    );
     if (!membership) {
       throw new AppError('You do not have access to this page', 403);
     }
@@ -176,7 +196,7 @@ export class PageService {
     if (membership.role === 'owner' || membership.role === 'admin') {
       return;
     }
-    const permission = await this.pagePermissionRepository.getPagePermissionForUser(client, page.id, userId);
+    const permission = await this.pagePermissionRepository.getPagePermissionForUserForPage(client, page.id, userId);
     const permissionHierarchy: Record<IPagePermissionEnum, number> = {
       view: 1,
       comment: 2,

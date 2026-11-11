@@ -37,9 +37,7 @@ export class PageRepository {
       FROM pages
         WHERE id = $1;
     `;
-
     const values = [pageId];
-
     const result = await client.query(query, values);
     const page: IPage | null = result.rows[0] ?? null;
     return page;
@@ -52,9 +50,7 @@ export class PageRepository {
         WHERE workspace_id = $1
       ORDER BY created_at ASC;
     `;
-
     const values = [workspaceId];
-
     const result = await client.query(query, values);
     const pages: IPage[] = result.rows;
     return pages;
@@ -89,7 +85,6 @@ export class PageRepository {
     }
 
     updates.push('updated_at = NOW()');
-
     values.push(pageId);
 
     const query = `
@@ -98,7 +93,6 @@ export class PageRepository {
         WHERE id = $${values.length}
       RETURNING *;
     `;
-
     const result = await client.query(query, values);
     const page: IPage | null = result.rows[0] ?? null;
     return page;
@@ -106,25 +100,24 @@ export class PageRepository {
 
   async deletePage(client: PoolClient, pageId: string): Promise<boolean> {
     const query = `
-    DELETE FROM pages
-      WHERE id = $1;
-  `;
+      DELETE FROM pages
+        WHERE id = $1;
+    `;
     const values = [pageId];
-
     const result = await client.query(query, values);
-
     return result.rowCount === 1;
   }
 
-  async hasChildPages(client: PoolClient, pageId: string): Promise<boolean> {
+  async hasChildPagesForPage(client: PoolClient, pageId: string): Promise<boolean> {
     const query = `
-    SELECT EXISTS (
-      SELECT 1
-      FROM pages
-      WHERE parent_page_id = $1
-    ) AS has_children;
-  `;
-    const result = await client.query(query, [pageId]);
+      SELECT EXISTS (
+        SELECT 1
+        FROM pages
+        WHERE parent_page_id = $1
+      ) AS has_children;
+    `;
+    const values = [pageId];
+    const result = await client.query(query, values);
     return result.rows[0].has_children;
   }
 }

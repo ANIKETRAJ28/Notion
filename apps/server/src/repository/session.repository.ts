@@ -22,8 +22,9 @@ export class SessionRepository {
       FOR UPDATE;
     `;
     const values = [sessionId];
-    const result = await client.query<ISession>(query, values);
-    return result.rows[0] ?? null;
+    const result = await client.query(query, values);
+    const session: ISession | null = result.rows[0] ?? null;
+    return session;
   }
 
   async revokeSession(client: PoolClient, sessionId: string): Promise<boolean> {

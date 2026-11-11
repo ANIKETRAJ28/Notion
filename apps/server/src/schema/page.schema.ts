@@ -9,6 +9,13 @@ export const createPageSchema = z.object({
   cover_url: z.url().nullable().optional(),
 });
 
+export const updatePageSchema = z.object({
+  parent_page_id: z.string().trim().nullable().optional(),
+  title: z.string().trim().optional(),
+  icon: z.string().trim().nullable().optional(),
+  cover_url: z.url().nullable().optional(),
+});
+
 export type ICreatePage = z.infer<typeof createPageSchema>;
 
 export interface IPage {
@@ -24,7 +31,7 @@ export interface IPage {
   updated_at: Date;
 }
 
-export type IUpdatePage = Partial<Pick<ICreatePage, 'parent_page_id' | 'title' | 'icon' | 'cover_url'>>;
+export type IUpdatePage = z.infer<typeof updatePageSchema>;
 
 export interface IPageTree extends IPage {
   children: IPageTree[];

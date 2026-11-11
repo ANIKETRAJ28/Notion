@@ -12,6 +12,8 @@ const workspaceRepository = new WorkspaceRepository();
 const workspaceService = new WorkspaceService(workspaceRepository, pool);
 const workspaceController = new WorkspaceController(workspaceService);
 
-router.get('/', authenticationMiddleware, workspaceController.getUserWorkspaces);
+router.use(authenticationMiddleware);
+
+router.get('/', workspaceController.getUserWorkspaces);
 
 export default router;

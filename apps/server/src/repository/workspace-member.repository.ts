@@ -12,7 +12,11 @@ export class WorkspaceMemberRepository {
     await client.query(query, values);
   }
 
-  async getWorkspaceMember(client: PoolClient, workspaceId: string, userId: string): Promise<IWorkspaceMember | null> {
+  async getWorkspaceMemberForUser(
+    client: PoolClient,
+    workspaceId: string,
+    userId: string,
+  ): Promise<IWorkspaceMember | null> {
     const query = `
       SELECT *
       FROM workspace_members
@@ -20,7 +24,6 @@ export class WorkspaceMemberRepository {
         AND user_id = $2;
     `;
     const values = [workspaceId, userId];
-
     const result = await client.query(query, values);
     const workspaceMember: IWorkspaceMember | null = result.rows[0] ?? null;
     return workspaceMember;
