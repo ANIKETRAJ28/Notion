@@ -37,7 +37,7 @@ export class PageController {
   getPageById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const { pageId } = req.params;
+      const pageId = req.params.page_id;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);
@@ -71,7 +71,7 @@ export class PageController {
   getWorkspacePages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const { workspaceId } = req.params;
+      const workspaceId = req.params.workspace_id;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);
@@ -105,7 +105,7 @@ export class PageController {
   updatePage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const { pageId } = req.params;
+      const pageId = req.params.page_id;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);
@@ -149,7 +149,7 @@ export class PageController {
   deletePage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const { pageId } = req.params;
+      const pageId = req.params.page_id;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);

@@ -11,7 +11,7 @@ export class PagePermissionController {
   grantPagePermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const grantedBy = req.user?.id;
-      const { pageId } = req.params;
+      const pageId = req.params.page_id;
 
       if (!grantedBy) {
         throw new AppError('Authentication required', 401);
@@ -64,7 +64,7 @@ export class PagePermissionController {
   getPagePermissionsForPage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user?.id;
-      const { pageId } = req.params;
+      const pageId = req.params.page_id;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);
@@ -101,7 +101,8 @@ export class PagePermissionController {
   updatePagePermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const updatedBy = req.user?.id;
-      const { pageId, userId } = req.params;
+      const pageId = req.params.page_id;
+      const userId = req.params.user_id;
 
       if (!updatedBy) {
         throw new AppError('Authentication required', 401);
@@ -169,7 +170,8 @@ export class PagePermissionController {
   revokePagePermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const revokedBy = req.user?.id;
-      const { pageId, userId } = req.params;
+      const pageId = req.params.page_id;
+      const userId = req.params.user_id;
 
       if (!revokedBy) {
         throw new AppError('Authentication required', 401);

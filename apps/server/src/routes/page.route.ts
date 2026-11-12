@@ -19,9 +19,9 @@ const pageController = new PageController(pageService);
 router.use(authenticationMiddleware);
 
 router.post('/', pageController.createPage);
-router.get('/workspaces/:workspaceId', pageController.getWorkspacePages);
-router.get('/:pageId', pageController.getPageById);
-router.patch('/:pageId', pageController.updatePage);
-router.delete('/:pageId', pageController.deletePage);
+router.get('/workspaces/:workspace_id', pageController.getWorkspacePages);
+router.get('/:page_id', pageController.getPageById);
+router.patch('/:page_id', pageController.updatePage);
+router.delete('/:page_id', pageController.deletePage);
 
 export default router;

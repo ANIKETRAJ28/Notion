@@ -23,9 +23,9 @@ const pagePermissionController = new PagePermissionController(pagePermissionServ
 
 router.use(authenticationMiddleware);
 
-router.post('/:pageId/permissions', pagePermissionController.grantPagePermission);
-router.get('/:pageId/parmissions', pagePermissionController.getPagePermissionsForPage);
-router.patch('/:pageId/permissions/:userId', pagePermissionController.updatePagePermission);
-router.delete('/:pageId/permissions/:userId', pagePermissionController.revokePagePermission);
+router.post('/:page_id/permissions', pagePermissionController.grantPagePermission);
+router.get('/:page_id/permissions', pagePermissionController.getPagePermissionsForPage);
+router.patch('/:page_id/permissions/:user_id', pagePermissionController.updatePagePermission);
+router.delete('/:page_id/permissions/:user_id', pagePermissionController.revokePagePermission);
 
 export default router;

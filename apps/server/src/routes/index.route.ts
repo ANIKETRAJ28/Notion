@@ -4,10 +4,12 @@ import authRoute from './auth.route.js';
 import pageRouter from './page.route.js';
 import pagePermissionRouter from './page-permission.route.js';
 import workspaceRouter from './workspace.route.js';
+import workspaceMemberRouter from './workspace-member.route.js';
 
 export const router = Router();
 
 router.use('/auth', authRoute);
 router.use('/workspaces', workspaceRouter);
+router.use('/workspace-member', workspaceMemberRouter);
 router.use('/pages', pageRouter);
 router.use('/page-permissions', pagePermissionRouter);
