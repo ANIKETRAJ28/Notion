@@ -28,4 +28,16 @@ export class UserRepository {
     const user: IUserWithPassword = result.rows[0];
     return user;
   }
+
+  async findUserById(client: PoolClient, userId: string): Promise<IUser | null> {
+    const query = `
+      SELECT id, name, email, created_at, updated_at
+      FROM users
+        WHERE id = $1;
+    `;
+    const values = [userId];
+    const result = await client.query(query, values);
+    const user: IUser | null = result.rows[0] ?? null;
+    return user;
+  }
 }

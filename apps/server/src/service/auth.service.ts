@@ -214,4 +214,17 @@ export class AuthService {
       client.release();
     }
   }
+
+  async getCurretUser(userId: string): Promise<IUser> {
+    const client = await this.clientPool.connect();
+    try {
+      const user = await this.userRepository.findUserById(client, userId);
+      if (!user) {
+        throw new AppError('User not found with the given id', 400);
+      }
+      return user;
+    } finally {
+      client.release();
+    }
+  }
 }

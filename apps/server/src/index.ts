@@ -1,13 +1,15 @@
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express from 'express';
 
-import { PORT } from './config/env.config.js';
+import { FRONTEND_URL, PORT } from './config/env.config.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
 import { router } from './routes/index.route.js';
 
 export const app = express();
 
+app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(requestIdMiddleware);

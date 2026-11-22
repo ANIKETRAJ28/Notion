@@ -3,7 +3,7 @@ import { Pool, PoolClient } from 'pg';
 import { PageRepository } from '../repository/page.repository.js';
 import { PagePermissionRepository } from '../repository/page-permission.repository.js';
 import { WorkspaceMemberRepository } from '../repository/workspace-member.repository.js';
-import { ICreatePage, IPage, IPageTree, IUpdatePage } from '../schema/page.schema.js';
+import { ICreatePage, IPage, IUpdatePage } from '../schema/page.schema.js';
 import { IPagePermissionEnum } from '../schema/page-permission.schema.js';
 import { AppError } from '../utils/app-error.util.js';
 
@@ -74,14 +74,18 @@ export class PageService {
     }
   }
 
-  async getPagesForWorkspace(userId: string, workspaceId: string): Promise<IPage[]> {
+  async getPagesForWorkspaceAndPage(
+    userId: string,
+    workspaceId: string,
+    parentPageId: string | null,
+  ): Promise<IPage[]> {
     const client = await this.clientPool.connect();
     try {
       const membership = await this.workspaceMemberRepository.getWorkspaceMemberForUser(client, workspaceId, userId);
       if (!membership) {
         throw new AppError('You do not have access to this workspace', 403);
       }
-      const pages = await this.pageRepository.getWorkspacePages(client, workspaceId);
+      const pages = await this.pageRepository.getWorkspacePagesWithParentPageId(client, workspaceId, parentPageId);
       if (membership.role === 'owner' || membership.role === 'admin') {
         return pages;
       }
@@ -98,10 +102,10 @@ export class PageService {
     }
   }
 
-  async getWorkspacePageTree(userId: string, workspaceId: string): Promise<IPageTree[]> {
-    const pages = await this.getPagesForWorkspace(userId, workspaceId);
-    return this.buildPageTree(pages);
-  }
+  // async getWorkspacePageTree(userId: string, workspaceId: string): Promise<IPageTree[]> {
+  //   const pages = await this.getPagesForWorkspaceAndPage(userId, workspaceId, null);
+  //   return this.buildPageTree(pages);
+  // }
 
   async updatePage(userId: string, pageId: string, data: IUpdatePage): Promise<IPage> {
     const client = await this.clientPool.connect();
@@ -234,25 +238,25 @@ export class PageService {
     return false;
   }
 
-  private buildPageTree(pages: IPage[]): IPageTree[] {
-    const pageMap = new Map<string, IPageTree>();
-    // Create a tree node for every page.
-    for (const page of pages) {
-      pageMap.set(page.id, {
-        ...page,
-        children: [],
-      });
-    }
-    const rootPages: IPageTree[] = [];
-    // Connect child pages to their parents.
-    for (const page of pageMap.values()) {
-      if (page.parent_page_id && pageMap.has(page.parent_page_id)) {
-        const parentPage = pageMap.get(page.parent_page_id)!;
-        parentPage.children.push(page);
-      } else {
-        rootPages.push(page);
-      }
-    }
-    return rootPages;
-  }
+  // private buildPageTree(pages: IPage[]): IPageTree[] {
+  //   const pageMap = new Map<string, IPageTree>();
+  //   // Create a tree node for every page.
+  //   for (const page of pages) {
+  //     pageMap.set(page.id, {
+  //       ...page,
+  //       children: [],
+  //     });
+  //   }
+  //   const rootPages: IPageTree[] = [];
+  //   // Connect child pages to their parents.
+  //   for (const page of pageMap.values()) {
+  //     if (page.parent_page_id && pageMap.has(page.parent_page_id)) {
+  //       const parentPage = pageMap.get(page.parent_page_id)!;
+  //       parentPage.children.push(page);
+  //     } else {
+  //       rootPages.push(page);
+  //     }
+  //   }
+  //   return rootPages;
+  // }
 }

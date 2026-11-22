@@ -56,6 +56,56 @@ export class PageRepository {
     return pages;
   }
 
+  async getWorkspacePagesWithParentPageId(
+    client: PoolClient,
+    workspaceId: string,
+    parentPageId: string | null,
+  ): Promise<IPage[]> {
+    let query = `
+      SELECT *
+      FROM pages
+        WHERE workspace_id = $1
+    `;
+    if (!parentPageId) {
+      query += ' AND parent_page_id IS null';
+    } else {
+      query += ' AND parent_page_id = $2';
+    }
+    query += ' ORDER BY created_at ASC;';
+
+    const values = [workspaceId];
+    if (parentPageId) {
+      values.push(parentPageId);
+    }
+    const result = await client.query(query, values);
+    const pages: IPage[] = result.rows;
+    return pages;
+  }
+
+  // async getPageAnsistorsForWorkspace(client: PoolClient, workspaceId: string, pageId: string): Promise<IPage[]> {
+  //   const query = `
+  //     WITH RECCURSIVE page_chain AS (
+  //       SELECT *, ARRAY[id] AS path FROM pages
+  //         WHERE id = $1
+  //           AND workspace_id = $2
+
+  //         UNION
+
+  //       SELECT parent.* FROM pages parent
+  //       INNER JOIN page_chain child
+  //         ON child.parnet_page_id = parent.id
+  //       WHERE NOT parent.id = ANY(child.path)
+  //     )
+
+  //     SELECT * FROM page_chain;
+  //   `;
+
+  //   const values = [pageId, workspaceId];
+  //   const result = await client.query(query, values);
+  //   const pages: IPage[] = result.rows;
+  //   return pages;
+  // }
+
   async updatePage(client: PoolClient, pageId: string, data: IUpdatePage): Promise<IPage | null> {
     const updates: string[] = [];
     const values: (string | null)[] = [];

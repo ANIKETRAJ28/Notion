@@ -26,6 +26,7 @@ const authController = new AuthController(authService);
 
 router.post('/login', authController.loginUser);
 router.post('/register', authController.registerUser);
+router.post('/refresh', authController.refreshToken);
 router.get('/logout', authController.logout);
 router.get('/me', authenticationMiddleware, authController.getCurrentUser);
 

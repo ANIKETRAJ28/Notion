@@ -111,10 +111,17 @@ export class AuthController {
 
   getCurrentUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError('Authentication required', 401);
+      }
+
+      const user = await this.authService.getCurretUser(userId);
       res.status(200).json({
         success: true,
         data: {
-          userId: req.user?.id,
+          user: user,
         },
       });
     } catch (error) {

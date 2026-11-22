@@ -72,6 +72,7 @@ export class PageController {
     try {
       const userId = req.user?.id;
       const workspaceId = req.params.workspace_id;
+      const pageId = req.params.page_id ?? null;
 
       if (!userId) {
         throw new AppError('Authentication required', 401);
@@ -90,7 +91,15 @@ export class PageController {
         });
         return;
       }
-      const pages = await this.pageService.getPagesForWorkspace(userId, workspaceId);
+      if (pageId !== null && typeof pageId !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid Workspace Id',
+        });
+        return;
+      }
+
+      const pages = await this.pageService.getPagesForWorkspaceAndPage(userId, workspaceId, pageId);
 
       res.status(200).json({
         success: true,

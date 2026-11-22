@@ -10,5 +10,6 @@ export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 export const ACCESS_EXPIREY = process.env.ACCESS_EXPIREY ?? '15m';
 export const REFRESH_EXPIREY = process.env.REFRESH_EXPIREY ?? '7d';
 export const NODE_ENV = process.env.NODE_ENV ?? 'dev';
+export const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;

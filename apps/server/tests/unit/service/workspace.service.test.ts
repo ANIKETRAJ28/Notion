@@ -2,11 +2,14 @@ import { Pool, PoolClient } from 'pg';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkspaceRepository } from '../../../src/repository/workspace.repository';
+import { WorkspaceMemberRepository } from '../../../src/repository/workspace-member.repository';
 import { IWorkspaceWithMember } from '../../../src/schema/workspace.schema';
 import { WorkspaceService } from '../../../src/service/workspace.service';
 
 const connectMock = vi.fn();
 const getUserWorkspacesMock = vi.fn();
+const createWorkspaceMemberMock = vi.fn();
+const getWorkspaceMemberForUserMock = vi.fn();
 
 const client = {
   release: vi.fn(),
@@ -19,6 +22,11 @@ const clientPool = {
 const workspaceRepository = {
   getUserWorkspaces: getUserWorkspacesMock,
 } as unknown as WorkspaceRepository;
+
+const workspaceMemberRepository = {
+  createWorkspaceMember: createWorkspaceMemberMock,
+  getWorkspaceMemberForUser: getWorkspaceMemberForUserMock,
+} as unknown as WorkspaceMemberRepository;
 
 let workspaceService: WorkspaceService;
 
@@ -49,7 +57,7 @@ describe('WorkspaceService - getUserWorkspaces', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     connectMock.mockResolvedValue(client);
-    workspaceService = new WorkspaceService(workspaceRepository, clientPool);
+    workspaceService = new WorkspaceService(workspaceRepository, workspaceMemberRepository, clientPool);
   });
 
   it('should successfully return all workspaces belonging to a user', async () => {
